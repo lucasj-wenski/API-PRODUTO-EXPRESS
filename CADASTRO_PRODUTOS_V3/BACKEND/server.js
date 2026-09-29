@@ -18,21 +18,41 @@ const pool = process.env.DATABASE_URL
     })
     : null;
 
-if (pool) {
-    pool.query('SELECT NOW()')
-        .then(() => console.log('Conectado com sucesso ao PostgreSQL (Supabase)'))
-        .catch((erro) => console.error('Erro de conexão com o Supabase:', erro.message));
-} else {
+if (!pool) {
     console.warn('DATABASE_URL não definida. O backend continuará em modo sem banco de dados.');
 }
 
-function garantirBanco(req, res, next) {
+let schemaPromise;
+
+async function garantirBanco(req, res, next) {
     if (!pool) {
         return res.status(503).json({
             erro: 'Banco de dados indisponível. Configure DATABASE_URL no ambiente do Vercel.'
         });
     }
-    next();
+
+    try {
+        if (!schemaPromise) {
+            schemaPromise = pool.query(`
+                CREATE TABLE IF NOT EXISTS produtos (
+                    id SERIAL PRIMARY KEY,
+                    nome TEXT NOT NULL,
+                    preco NUMERIC(10,2) NOT NULL,
+                    quantidade INTEGER NOT NULL,
+                    imagem TEXT
+                );
+            `);
+        }
+
+        await schemaPromise;
+        next();
+    } catch (erro) {
+        schemaPromise = null;
+        console.error('Banco de dados indisponível:', erro.message);
+        res.status(503).json({
+            erro: 'Não foi possível conectar ao banco de dados. Verifique DATABASE_URL e a conectividade do Supabase.'
+        });
+    }
 }
 
 app.use(cors({

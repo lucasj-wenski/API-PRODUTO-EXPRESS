@@ -109,8 +109,10 @@ async function renderizarTabela() {
         const resposta = await fetch(API_URL);
 
         if (!resposta.ok) {
+            const erroServidor = await resposta.json().catch(() => null);
             throw new Error(
-                'Não foi possível buscar os produtos no servidor'
+                erroServidor?.erro ||
+                `Não foi possível buscar os produtos no servidor (HTTP ${resposta.status})`
             );
         }
 
