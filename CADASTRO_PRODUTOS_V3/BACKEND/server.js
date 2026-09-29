@@ -41,7 +41,9 @@ async function garantirBanco(req, res, next) {
                     quantidade INTEGER NOT NULL,
                     imagem TEXT
                 );
-            `);
+            `).then(() => pool.query(
+                'ALTER TABLE produtos ADD COLUMN IF NOT EXISTS imagem TEXT'
+            ));
         }
 
         await schemaPromise;
