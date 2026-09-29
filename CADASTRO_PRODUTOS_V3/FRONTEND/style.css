@@ -1,0 +1,309 @@
+/* TEMA ESCURO COM VERDE NEON */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    position: relative;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #080d0d;
+    color: #00cc66;
+    min-height: 100vh;
+    overflow-x: hidden;
+    isolation: isolate;
+}
+
+body::before,
+body::after {
+    content: '';
+    position: fixed;
+    inset: -35%;
+    z-index: -1;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    will-change: transform;
+}
+
+body::before {
+    background:
+        linear-gradient(112deg, transparent 42%, rgba(0, 255, 136, 0.03) 46%, rgba(0, 255, 136, 0.75) 48%, rgba(0, 255, 136, 0.08) 49%, transparent 53%),
+        linear-gradient(294deg, transparent 38%, rgba(0, 191, 255, 0.03) 44%, rgba(0, 191, 255, 0.65) 46%, rgba(0, 191, 255, 0.06) 47%, transparent 52%);
+    filter: blur(1px);
+    opacity: 0.65;
+    animation: laser-sweep 14s ease-in-out infinite alternate;
+}
+
+body::after {
+    background:
+        linear-gradient(68deg, transparent 48%, rgba(0, 255, 136, 0.45) 49%, transparent 50%),
+        linear-gradient(248deg, transparent 47%, rgba(0, 191, 255, 0.4) 48%, transparent 49%);
+    opacity: 0.4;
+    animation: laser-sweep-reverse 19s ease-in-out infinite alternate;
+}
+
+@keyframes laser-sweep {
+    from {
+        transform: translate3d(-8%, -3%, 0) rotate(-2deg) scale(1.05);
+    }
+
+    to {
+        transform: translate3d(8%, 5%, 0) rotate(3deg) scale(1.1);
+    }
+}
+
+@keyframes laser-sweep-reverse {
+    from {
+        transform: translate3d(7%, 4%, 0) rotate(3deg) scale(1.1);
+    }
+
+    to {
+        transform: translate3d(-7%, -4%, 0) rotate(-3deg) scale(1.05);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::before,
+    body::after {
+        animation: none;
+    }
+}
+
+/* Banner com imagem */
+.banner {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 30px;
+    margin-bottom: 10px;
+}
+
+.banner-img {
+    width: 180px;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    border-radius: 12px;
+    border: 2px solid #00cc66;
+    background: #101010;
+    padding: 4px;
+}
+
+.banner-titulo {
+    text-align: center;
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #00cc66;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
+/* Container principal */
+.container {
+    max-width: 900px;
+    background: #121212;
+    padding: 40px;
+    margin: 60px auto 30px;
+    border-radius: 12px;
+    border: 2px solid #00cc66;
+}
+
+/* Título principal */
+h1 {
+    text-align: center;
+    color: #00cc66;
+    font-size: 2.2em;
+    margin-bottom: 30px;
+    letter-spacing: 1px;
+}
+
+/* Formulário */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #171717;
+    border: 1px solid #00cc66;
+    border-radius: 10px;
+}
+
+/* Labels */
+label {
+    color: #00cc66;
+    font-weight: bold;
+    font-size: 1em;
+}
+
+input[type="text"],
+input[type="number"] {
+    padding: 12px 15px;
+    font-size: 1em;
+    background: #0d0d0d;
+    border: 1px solid #00cc66;
+    color: #00cc66;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+input[type="text"]::placeholder,
+input[type="number"]::placeholder {
+    color: rgba(0, 255, 0, 0.5);
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    border-color: #00cc66;
+    outline: none;
+}
+
+/* Botões */
+button {
+    padding: 12px 20px;
+    font-size: 1em;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-adicionar {
+    background: #00cc66;
+    color: #000;
+    margin-top: 10px;
+}
+
+.btn-adicionar:hover {
+    opacity: 0.9;
+}
+
+.btn-adicionar:active {
+    transform: translateY(0);
+}
+
+.btn-limpar {
+    background: #cc3a3a;
+    color: white;
+    margin-top: 20px;
+}
+
+.btn-limpar:hover {
+    opacity: 0.9;
+}
+
+/* Botão de apagar na tabela */
+.btn-apagar {
+    background: #ff3333;
+    color: white;
+    padding: 6px 12px;
+    font-size: 0.9em;
+    border-radius: 5px;
+}
+
+.btn-apagar:hover {
+    background: #cc0000;
+    transform: scale(1.05);
+}
+
+/* Total em estoque */
+.total-estoque {
+    text-align: center;
+    color: #00cc66;
+    font-size: 1.3em;
+    margin: 20px 0;
+    padding: 15px;
+    background: #181818;
+    border: 1px solid #00cc66;
+    border-radius: 10px;
+}
+
+/* Tabela */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: #121212;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Cabeçalho da tabela */
+thead {
+    background: #00cc66;
+    color: #000;
+}
+
+th {
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Células da tabela */
+td {
+    border-bottom: 1px solid #00ff00;
+    padding: 15px;
+    text-align: center;
+    color: #00ff00;
+    transition: all 0.3s ease;
+}
+
+/* Linhas alternadas */
+tbody tr:nth-child(odd) {
+    background: rgba(0, 255, 0, 0.05);
+}
+
+tbody tr:nth-child(even) {
+    background: rgba(0, 255, 0, 0.02);
+}
+
+tbody tr:hover {
+    background: rgba(0, 204, 102, 0.08);
+}
+
+/* Imagem na tabela */
+.img-tabela {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border-radius: 5px;
+    border: 1px solid #00cc66;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 1.8em;
+    }
+
+    table {
+        font-size: 0.9em;
+    }
+
+    th, td {
+        padding: 10px;
+    }
+
+    .banner-img {
+        height: 200px;
+    }
+
+    .banner-titulo {
+        font-size: 1.4em;
+    }
+}
