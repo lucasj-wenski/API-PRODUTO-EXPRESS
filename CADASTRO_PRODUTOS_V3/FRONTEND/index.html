@@ -15,7 +15,12 @@
     <div class="banner-titulo">Lucas José Wenski</div>
 
     <div class="container">
+        <header class="user-bar">
+            <span id="usuario-atual">Verificando sessão...</span>
+            <button id="btn-logout" class="btn-secundario" type="button">Sair</button>
+        </header>
         <h1>Cadastro de Produtos</h1>
+        <p id="mensagem" class="mensagem" role="status" aria-live="polite"></p>
         <form id="produto-form">
 
             <label>Nome do Produto: </label>
@@ -42,7 +47,7 @@
                     <th>Preço</th>
                     <th>Quantidade</th>
                     <th>Total Bruto</th>
-                    <th>Ação</th>
+                    <th id="coluna-acoes" hidden>Ação</th>
                 </tr>
             </thead>
             <tbody>
@@ -52,6 +57,7 @@
 
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
 
 </body>

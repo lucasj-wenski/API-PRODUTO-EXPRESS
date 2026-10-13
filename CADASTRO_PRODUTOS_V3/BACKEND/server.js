@@ -10,6 +10,8 @@ if (process.env.NODE_ENV !== 'production') {
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 const pool = process.env.DATABASE_URL
     ? new Pool({
@@ -57,12 +59,74 @@ async function garantirBanco(req, res, next) {
     }
 }
 
+async function autenticarUsuario(req, res, next) {
+    const authorization = req.headers.authorization || '';
+    const token = authorization.startsWith('Bearer ')
+        ? authorization.slice(7)
+        : '';
+
+    if (!token) {
+        return res.status(401).json({ erro: 'Faça login para continuar.' });
+    }
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        return res.status(503).json({ erro: 'Autenticação Supabase não configurada no servidor.' });
+    }
+
+    try {
+        const respostaAuth = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/user`, {
+            headers: {
+                apikey: SUPABASE_ANON_KEY,
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!respostaAuth.ok) {
+            return res.status(401).json({ erro: 'Sessão inválida ou expirada. Entre novamente.' });
+        }
+
+        const usuario = await respostaAuth.json();
+        const perfil = await pool.query(
+            'SELECT role FROM public.profiles WHERE id = $1',
+            [usuario.id]
+        );
+
+        req.usuario = {
+            id: usuario.id,
+            email: usuario.email,
+            role: perfil.rows[0]?.role || 'user'
+        };
+
+        next();
+    } catch (erro) {
+        console.error('Erro ao validar sessão:', erro.message);
+        res.status(503).json({ erro: 'Não foi possível validar a sessão agora.' });
+    }
+}
+
+function exigirAdmin(req, res, next) {
+    if (req.usuario?.role !== 'admin') {
+        return res.status(403).json({ erro: 'Somente administradores podem realizar esta ação.' });
+    }
+
+    next();
+}
+
 app.use(cors({
     origin: true,
     methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10mb' }));
+
+app.get('/config', (req, res) => {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        return res.status(503).json({ erro: 'Configure SUPABASE_URL e SUPABASE_ANON_KEY no Vercel.' });
+    }
+
+    res.json({ url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY });
+});
+
 app.use(express.static(path.join(__dirname, '../FRONTEND')));
 app.use('/img', express.static(path.join(__dirname, 'img')));
 
@@ -74,7 +138,15 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../FRONTEND/index.html'));
 });
 
-app.get('/produtos', garantirBanco, async (req, res) => {
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, '../FRONTEND/login.html'));
+});
+
+app.get('/me', garantirBanco, autenticarUsuario, (req, res) => {
+    res.json(req.usuario);
+});
+
+app.get('/produtos', garantirBanco, autenticarUsuario, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM produtos ORDER BY id ASC');
         res.json(result.rows);
@@ -84,7 +156,7 @@ app.get('/produtos', garantirBanco, async (req, res) => {
     }
 });
 
-app.post('/produtos', garantirBanco, async (req, res) => {
+app.post('/produtos', garantirBanco, autenticarUsuario, async (req, res) => {
     const { nome, preco, quantidade, imagem } = req.body;
     const nomeNormalizado = typeof nome === 'string' ? nome.trim() : '';
     const precoNumero = Number(preco);
@@ -115,7 +187,42 @@ app.post('/produtos', garantirBanco, async (req, res) => {
     }
 });
 
-app.delete('/produtos/:id', garantirBanco, async (req, res) => {
+app.put('/produtos/:id', garantirBanco, autenticarUsuario, exigirAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    const { nome, preco, quantidade } = req.body;
+    const nomeNormalizado = typeof nome === 'string' ? nome.trim() : '';
+    const precoNumero = Number(preco);
+    const quantidadeNumero = Number(quantidade);
+
+    if (
+        !Number.isInteger(id) || id <= 0 || !nomeNormalizado ||
+        !Number.isFinite(precoNumero) || precoNumero <= 0 ||
+        !Number.isInteger(quantidadeNumero) || quantidadeNumero <= 0
+    ) {
+        return res.status(400).json({ erro: 'Dados inválidos enviados para o servidor.' });
+    }
+
+    try {
+        const result = await pool.query(
+            `UPDATE produtos
+             SET nome = $1, preco = $2, quantidade = $3
+             WHERE id = $4
+             RETURNING *`,
+            [nomeNormalizado, precoNumero, quantidadeNumero, id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ erro: 'Produto não encontrado.' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (erro) {
+        console.error('Erro ao atualizar produto:', erro);
+        res.status(500).json({ erro: 'Erro ao atualizar produto.' });
+    }
+});
+
+app.delete('/produtos/:id', garantirBanco, autenticarUsuario, exigirAdmin, async (req, res) => {
     const id = Number(req.params.id);
 
     if (!Number.isInteger(id) || id <= 0) {
@@ -136,7 +243,7 @@ app.delete('/produtos/:id', garantirBanco, async (req, res) => {
     }
 });
 
-app.delete('/produtos', garantirBanco, async (req, res) => {
+app.delete('/produtos', garantirBanco, autenticarUsuario, exigirAdmin, async (req, res) => {
     try {
         await pool.query('DELETE FROM produtos');
         res.status(204).send();
